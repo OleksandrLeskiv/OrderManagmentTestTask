@@ -1,0 +1,43 @@
+﻿@page "/SalesOrder"
+@using SalesOrderDataManager.BLL.DTO
+@inject HttpClient Http
+<h3>SalesOrder</h3>
+
+@if (_orderDtos is null)
+{
+    <p>
+        <em>Loading...</em>
+    </p>
+}
+else
+{
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>State</th>
+            <th>Windows Count</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var order in _orderDtos)
+        {
+            <tr>
+                <td>@order.Name</td>
+                <td>@order.State</td>
+                <td>@order.Windows?.Count</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<SalesOrderDTO>? _orderDtos;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _orderDtos = await Http.GetFromJsonAsync<List<SalesOrderDTO>>($"api/SalesOrder");
+        
+    }
+}
