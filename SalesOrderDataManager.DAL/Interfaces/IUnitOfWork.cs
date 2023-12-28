@@ -2,8 +2,8 @@
 
 public interface IUnitOfWork
 {
-    public ISalesOrderRepository SalesOrders { get; }
-    public ISubElementRepository SubElements { get; }
-    public IWindowRepository Windows { get; }
-    public Task SaveAsync();
+    ISalesOrderRepository SalesOrders { get; }
+    ISubElementRepository SubElements { get; }
+    IWindowRepository Windows { get; }
+    Task SaveChangesAsync();
 }

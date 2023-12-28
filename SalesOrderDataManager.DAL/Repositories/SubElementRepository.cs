@@ -4,10 +4,17 @@ using SalesOrderDataManager.DAL.Interfaces;
 
 namespace SalesOrderDataManager.DAL.Repositories;
 
-public class SubElementRepository : RepositoryBase<SubElement>, ISubElementRepository
+public class SubElementRepository :  ISubElementRepository
 {
+    private readonly ApplicationDbContext _applicationDbContext;
+
     public SubElementRepository(ApplicationDbContext applicationDbContext)
-        : base(applicationDbContext)
     {
+        _applicationDbContext = applicationDbContext;
+    }
+
+    public async Task SaveAsync()
+    {
+        await _applicationDbContext.SaveChangesAsync();
     }
 }

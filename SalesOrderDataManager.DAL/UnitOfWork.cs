@@ -5,15 +5,13 @@ namespace SalesOrderDataManager.DAL;
 
 public class UnitOfWork : IUnitOfWork
 {
-    private readonly ApplicationDbContext _context;
     private readonly Lazy<ISalesOrderRepository> _salesOrders;
     private readonly Lazy<ISubElementRepository> _subElements;
     private readonly Lazy<IWindowRepository> _windows;
 
-    public UnitOfWork(ApplicationDbContext context, Lazy<ISalesOrderRepository> salesOrders, Lazy<ISubElementRepository> subElements,
+    public UnitOfWork(Lazy<ISalesOrderRepository> salesOrders, Lazy<ISubElementRepository> subElements,
         Lazy<IWindowRepository> windows)
     {
-        _context = context;
         _salesOrders = salesOrders;
         _subElements = subElements;
         _windows = windows;
@@ -22,8 +20,11 @@ public class UnitOfWork : IUnitOfWork
     public ISalesOrderRepository SalesOrders => _salesOrders.Value;
     public ISubElementRepository SubElements => _subElements.Value;
     public IWindowRepository Windows => _windows.Value;
-    public async Task SaveAsync()
+
+    public async Task SaveChangesAsync()
     {
-        await _context.SaveChangesAsync();
+        await SalesOrders.SaveAsync();
+        await SubElements.SaveAsync();
+        await Windows.SaveAsync();
     }
 }
