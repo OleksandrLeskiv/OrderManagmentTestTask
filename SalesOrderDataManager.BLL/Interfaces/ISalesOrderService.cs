@@ -6,6 +6,8 @@ namespace SalesOrderDataManager.BLL.Interfaces;
 
 public interface ISalesOrderService
 {
-    Task Add(SalesOrderDTO salesOrderDto);
+    Task<SalesOrderDTO> AddOrUpdate(SalesOrderDTO salesOrderDto);
     Task<IReadOnlyList<SalesOrderDTO>> GetAllByCondition(Expression<Func<SalesOrder, bool>> func);
+    Task<SalesOrderDTO?> GetFirstByCondition(Expression<Func<SalesOrder, bool>> func);
+    Task DeleteById(Guid id);
 }

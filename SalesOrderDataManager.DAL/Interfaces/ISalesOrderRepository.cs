@@ -6,6 +6,8 @@ namespace SalesOrderDataManager.DAL.Interfaces;
 public interface ISalesOrderRepository
 {
     Task<List<SalesOrder>> FindAllByCondition(Expression<Func<SalesOrder, bool>> func);
-    Task Add(SalesOrder emp);
+    Task<SalesOrder?> FindFirstByCondition(Expression<Func<SalesOrder, bool>> func, bool trackChanges = false);
+    Task<SalesOrder> Add(SalesOrder emp);
     Task SaveAsync();
+    Task DeleteById(Guid id);
 }

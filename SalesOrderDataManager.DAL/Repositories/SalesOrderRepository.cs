@@ -19,17 +19,44 @@ public class SalesOrderRepository : ISalesOrderRepository
         => _applicationDbContext.SalesOrders
             .AsNoTracking()
             .Where(func)
-            .Include(a => a.Windows)!
-            .ThenInclude(a => a.SubElements)
             .ToListAsync();
 
-    public async Task Add(SalesOrder emp)
+    public Task<SalesOrder?> FindFirstByCondition(Expression<Func<SalesOrder, bool>> func, bool trackChanges = false)
+        => trackChanges
+            ? _applicationDbContext
+                .SalesOrders
+                .FirstOrDefaultAsync(func)
+            : _applicationDbContext
+                .SalesOrders
+                .AsNoTracking()
+                .FirstOrDefaultAsync(func);
+
+    public async Task<SalesOrder> Add(SalesOrder emp)
     {
-        await _applicationDbContext.SalesOrders.AddAsync(emp);
+        var addedEntity = await _applicationDbContext.SalesOrders.AddAsync(emp);
+        return addedEntity.Entity;
     }
 
     public async Task SaveAsync()
     {
         await _applicationDbContext.SaveChangesAsync();
+    }
+
+    public async Task DeleteById(Guid id)
+    {
+        foreach (var order in _applicationDbContext.SalesOrders.Where(a => a.Id == id))
+        {
+            foreach (var window in _applicationDbContext.Windows.Where(a => a.OrderId == order.Id))
+            {
+                var elements = _applicationDbContext.SubElements
+                    .Where(a => a.WindowId == window.Id);
+
+                _applicationDbContext.SubElements.RemoveRange(elements);
+
+                _applicationDbContext.Windows.Remove(window);
+            }
+
+            _applicationDbContext.SalesOrders.Remove(order);
+        }
     }
 }
