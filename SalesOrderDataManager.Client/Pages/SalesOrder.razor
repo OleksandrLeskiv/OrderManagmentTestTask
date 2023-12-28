@@ -1,43 +1,83 @@
-﻿@page "/SalesOrder"
+﻿@page "/SalesOrder/{SalesOrderId}"
 @using SalesOrderDataManager.BLL.DTO
 @inject HttpClient Http
-<h3>SalesOrder</h3>
+@inject NavigationManager NavigationManager
 
-@if (_orderDtos is null)
+<h3>Order information</h3>
+@if (_orderDto is not null)
 {
-    <p>
-        <em>Loading...</em>
-    </p>
+    <div class="alert alert-light" role="alert">
+        <table>
+            <tr>
+                <td>Order name </td>
+                <td>:</td>
+                <td class="fw-bold">@_orderDto.Name</td>
+            </tr>
+            <tr>
+                <td>Order state </td>
+                <td>:</td>
+                <td class="fw-bold">
+                    <span>@(_orderDto.State)</span>
+                </td>
+            </tr>
+        </table>
+    </div>
+}
+
+@if (_windowDtos is null)
+{
+    <p> Loading...</p>
 }
 else
 {
     <table class="table">
         <thead>
         <tr>
-            <th>Name</th>
-            <th>State</th>
-            <th>Windows Count</th>
+            <th>Window name</th>
+            <th>Quantity of windows</th>
+            <th>Total sub elements</th>
+            <th>Actions</th>
         </tr>
         </thead>
         <tbody>
-        @foreach (var order in _orderDtos)
+        @foreach (var window in _windowDtos)
         {
             <tr>
-                <td>@order.Name</td>
-                <td>@order.State</td>
-                <td>@order.Windows?.Count</td>
+                <td>@window.Name</td>
+                <td>@window.QuantityOfWindows</td>
+                <td>@window.TotalSubElements</td>
+                <td>
+                    <button type="submit"
+                            @onclick="@(_ => ClickEditRecord(window))">
+                        Edit
+                    </button>
+                    &nbsp;
+                    <button type="submit"
+                            @onclick="@(_ => ClickDeleteButton(window))">
+                        Delete
+                    </button>
+                </td>
             </tr>
         }
         </tbody>
     </table>
 }
-
 @code {
-    private List<SalesOrderDTO>? _orderDtos;
+    [Parameter] public string? SalesOrderId { get; set; }
 
-    protected override async Task OnInitializedAsync()
+    private SalesOrderDTO? _orderDto;
+    private List<WindowDTO>? _windowDtos;
+    protected override async Task OnParametersSetAsync()
     {
-        _orderDtos = await Http.GetFromJsonAsync<List<SalesOrderDTO>>($"api/SalesOrder");
-        
+        _orderDto = await Http.GetFromJsonAsync<SalesOrderDTO>($"api/SalesOrder/{SalesOrderId}");
+        _windowDtos = await Http.GetFromJsonAsync<List<WindowDTO>>($"api/SalesOrder/{SalesOrderId}/Window");
+        await base.OnParametersSetAsync();
+    }
+    private async Task ClickDeleteButton(WindowDTO obj)
+    {
+    }
+
+    private async Task ClickEditRecord(WindowDTO obj)
+    {
     }
 }

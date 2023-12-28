@@ -1,0 +1,130 @@
+﻿@page "/SalesOrder"
+@using SalesOrderDataManager.BLL.DTO
+@using SalesOrderDataManager.Client.Dialogs
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@inject IToastService ToastService
+<h3>Sales orders grid</h3>
+
+<button type="button" @onclick="ShowCreateDialog">Create</button>
+
+@if (_orderDtos is null)
+{
+    <p>
+        <em>Loading...</em>
+    </p>
+}
+else if (_orderDtos.Count == 0)
+{
+    <p>
+        <em>No orders available.</em>
+    </p>
+}
+else
+{
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>State</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var order in _orderDtos)
+        {
+            <tr>
+                <td>@order.Name</td>
+                <td>@order.State</td>
+                <td>
+                    <button type="submit"
+                            @onclick="@(_ => ClickEdit(order))">
+                        Edit
+                    </button>
+                    &nbsp;
+                    <button type="submit"
+                            @onclick="@(_ => ClickShowDetails(order))">
+                        Details
+                    </button>
+                    &nbsp;
+                    <button type="submit"
+                            @onclick="@(_ => ClickDelete(order))">
+                        Delete
+                    </button>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+@if (_showCreateDialog)
+{
+    <EditSalesOrderDialog SalesOrder="_currentOrderForEdit" CloseDialog="@CloseCreateDialog" SaveOrder="@SaveNewOrder"/>
+}
+
+@code {
+    private List<SalesOrderDTO>? _orderDtos;
+    private bool _showCreateDialog = false;
+    private SalesOrderDTO? _currentOrderForEdit;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _orderDtos = await Http.GetFromJsonAsync<List<SalesOrderDTO>>($"api/SalesOrder");
+    }
+
+    private Task ClickShowDetails(SalesOrderDTO obj)
+    {
+        NavigationManager.NavigateTo($"/SalesOrder/{obj.Id}", false);
+        return Task.CompletedTask;
+    }
+
+    private Task ClickEdit(SalesOrderDTO order)
+    {
+        _currentOrderForEdit = order;
+        _showCreateDialog = true;
+        return Task.CompletedTask;
+    }
+    
+    private async Task ClickDelete(SalesOrderDTO obj)
+    {
+        var response = await Http.DeleteAsync($"api/SalesOrder/{obj.Id}");
+        if (response.IsSuccessStatusCode)
+        {
+            _orderDtos?.Remove(obj);
+            StateHasChanged();
+        }
+        else
+        {
+            ToastService.ShowError("The order could not be deleted");
+        }
+    }
+
+    private async Task SaveNewOrder(SalesOrderDTO newOrder)
+    {
+        var response = await Http.PostAsJsonAsync("api/SalesOrder", newOrder);
+        if (response.IsSuccessStatusCode)
+        {
+            var addedOrder = await response.Content.ReadFromJsonAsync<SalesOrderDTO>();
+            if (addedOrder != null && _orderDtos!.All(a => a.Id != addedOrder.Id))
+            {
+                _orderDtos?.Add(addedOrder);
+                StateHasChanged();
+            }
+        }
+        else
+        {
+            ToastService.ShowError("The order could not be saved");
+        }
+
+        CloseCreateDialog();
+    }
+
+    private void ShowCreateDialog()
+    {
+        _currentOrderForEdit = new SalesOrderDTO();
+        _showCreateDialog = true;
+    }
+
+    private void CloseCreateDialog() => _showCreateDialog = false;
+}

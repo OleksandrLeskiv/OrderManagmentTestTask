@@ -24,20 +24,23 @@ public class SalesOrderController : ControllerBase
     [HttpGet("{id:guid}")] 
     public async Task<IActionResult> GetSalesOrder(Guid id)
     {
-        var all = await _salesOrderService.GetAllByCondition(a => a.Id == id);
-        return Ok(all);
+        var orderDto = await _salesOrderService.GetFirstByCondition(a => a.Id == id);
+        return orderDto is null
+            ? NotFound()
+            : Ok(orderDto);
     }
     
-    [HttpPost] // add new sales order
-    public async Task<ActionResult> CreateEmployeeAsync(SalesOrderDTO employee)
+    [HttpPost] 
+    public async Task<ActionResult> CreateOrUpdateSalesOrder(SalesOrderDTO order)
     {
-        await _salesOrderService.Add(employee);
-        return Ok();
+        var addedOrder = await _salesOrderService.AddOrUpdate(order);
+        return Ok(addedOrder);
     }
-
-    [HttpDelete("{id:guid}")] // delete sales order by id
+    
+    [HttpDelete("{id:guid}")] 
     public async Task<IActionResult> DeleteSalesOrder(Guid id)
     {
+        await _salesOrderService.DeleteById(id);
         return Ok();
     }
 }
