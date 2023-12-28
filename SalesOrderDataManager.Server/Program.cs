@@ -1,4 +1,8 @@
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using SalesOrderDataManager.BLL.Interfaces;
+using SalesOrderDataManager.BLL.Mappers;
+using SalesOrderDataManager.BLL.Services;
 using SalesOrderDataManager.DAL;
 using SalesOrderDataManager.DAL.Context;
 using SalesOrderDataManager.DAL.Interfaces;
@@ -27,13 +31,29 @@ builder.Services
     .AddDbContext<ApplicationDbContext>(opts =>
         opts.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
             b => b.MigrationsAssembly("SalesOrderDataManager.Server")));
-builder.Services.AddAutoMapper(typeof(Program));
-builder.Services.AddControllers();
+
+var mapperConfig = new MapperConfiguration(mc => { mc.AddProfile(new MappingProfile()); });
+var mapper = mapperConfig.CreateMapper();
+builder.Services.AddSingleton(mapper);
+
+builder.Services.AddScoped<ISalesOrderService, SalesOrderService>();
+builder.Services.AddScoped<IWindowService, WindowService>();
+builder.Services.AddScoped<ISubElementService, SubElementService>();
+
+builder.Services.AddControllers()
+    .AddNewtonsoftJson(options =>
+        options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
+    );
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+app.UseCors(policy =>
+    policy.AllowAnyOrigin()
+        .AllowAnyMethod()
+        .AllowAnyHeader());
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
