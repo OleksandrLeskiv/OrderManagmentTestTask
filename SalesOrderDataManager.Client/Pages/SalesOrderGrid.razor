@@ -1,12 +1,13 @@
 ﻿@page "/SalesOrder"
 @using SalesOrderDataManager.BLL.DTO
+@using SalesOrderDataManager.BLL.Extensions
 @using SalesOrderDataManager.Client.Dialogs
 @inject HttpClient Http
 @inject NavigationManager NavigationManager
 @inject IToastService ToastService
 <h3>Sales orders grid</h3>
 
-<button type="button" @onclick="ShowCreateDialog">Create</button>
+<button type="button" @onclick="ShowCreateDialog" class="button-common button-create">Create</button>
 
 @if (_orderDtos is null)
 {
@@ -38,17 +39,20 @@ else
                 <td>@order.State</td>
                 <td>
                     <button type="submit"
-                            @onclick="@(_ => ClickEdit(order))">
+                            @onclick="@(_ => ClickEdit(order))"
+                            class="button-common button-edit">
                         Edit
                     </button>
                     &nbsp;
                     <button type="submit"
-                            @onclick="@(_ => ClickShowDetails(order))">
+                            @onclick="@(_ => ClickShowDetails(order))"
+                            class="button-common button-details">
                         Details
                     </button>
                     &nbsp;
                     <button type="submit"
-                            @onclick="@(_ => ClickDelete(order))">
+                            @onclick="@(_ => ClickDelete(order))"
+                            class="button-common button-delete">
                         Delete
                     </button>
                 </td>
@@ -81,11 +85,11 @@ else
 
     private Task ClickEdit(SalesOrderDTO order)
     {
-        _currentOrderForEdit = order;
+        _currentOrderForEdit = order.Clone();
         _showCreateDialog = true;
         return Task.CompletedTask;
     }
-    
+
     private async Task ClickDelete(SalesOrderDTO obj)
     {
         var response = await Http.DeleteAsync($"api/SalesOrder/{obj.Id}");
@@ -102,21 +106,32 @@ else
 
     private async Task SaveNewOrder(SalesOrderDTO newOrder)
     {
+        if (_orderDtos is null) return;
         var response = await Http.PostAsJsonAsync("api/SalesOrder", newOrder);
-        if (response.IsSuccessStatusCode)
+
+        if (response.IsSuccessStatusCode is false)
         {
-            var addedOrder = await response.Content.ReadFromJsonAsync<SalesOrderDTO>();
-            if (addedOrder != null && _orderDtos!.All(a => a.Id != addedOrder.Id))
-            {
-                _orderDtos?.Add(addedOrder);
-                StateHasChanged();
-            }
+            ToastService.ShowError("The order could not be saved");
+            return;
+        }
+
+        var addedOrder = await response.Content.ReadFromJsonAsync<SalesOrderDTO>();
+        if (addedOrder is null)
+        {
+            return;
+        }
+
+        int indexOfExisting = _orderDtos.FindIndex(a => a.Id == addedOrder.Id);
+        if (indexOfExisting != -1)
+        {
+            _orderDtos[indexOfExisting] = addedOrder;
         }
         else
         {
-            ToastService.ShowError("The order could not be saved");
+            _orderDtos?.Add(addedOrder);
         }
 
+        StateHasChanged();
         CloseCreateDialog();
     }
 

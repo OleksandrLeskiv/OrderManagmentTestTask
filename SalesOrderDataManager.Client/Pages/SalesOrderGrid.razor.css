@@ -1,0 +1,32 @@
+.button-common {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.button-create {
+    background-color: #28a745; 
+    color: white;
+}
+
+.button-edit {
+    background-color: #007bff; 
+    color: white;
+}
+
+.button-details {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.button-delete {
+    background-color: #dc3545; 
+    color: white;
+}
+
+.button-common:hover {
+    opacity: 0.85;
+}
