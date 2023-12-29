@@ -51,4 +51,10 @@ public class WindowService : IWindowService
         await _unitOfWork.SaveChangesAsync();
         return _mapper.Map<WindowDTO>(existingObj);
     }
+
+    public async Task<WindowDTO?> GetFirstByCondition(Expression<Func<Window, bool>> func)
+    {
+        var window = await _unitOfWork.Windows.FindFirstByCondition(func);
+        return _mapper.Map<WindowDTO>(window);
+    }
 }

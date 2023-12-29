@@ -22,6 +22,17 @@ public class WindowController : ControllerBase
         return Ok(all);
     }
     
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetWindowById(Guid salesOrderId, Guid id)
+    {
+        var window = await _windowService
+            .GetFirstByCondition(a => a.OrderId == salesOrderId && a.Id == id);
+
+        return window is null
+            ? NotFound()
+            : Ok(window);
+    }
+    
     [HttpPost]
     public async Task<ActionResult> CreateOrUpdateSalesOrder(WindowDTO window)
     {
