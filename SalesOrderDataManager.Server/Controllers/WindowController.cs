@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using SalesOrderDataManager.BLL.DTO;
 using SalesOrderDataManager.BLL.Interfaces;
 
 namespace SalesOrderDataManager.Server.Controllers;
@@ -19,5 +20,19 @@ public class WindowController : ControllerBase
     {
         var all = await _windowService.GetAllByCondition(a => a.OrderId == salesOrderId);
         return Ok(all);
+    }
+    
+    [HttpPost]
+    public async Task<ActionResult> CreateOrUpdateSalesOrder(WindowDTO window)
+    {
+        var addedWindow = await _windowService.AddOrUpdate(window);
+        return Ok(addedWindow);
+    }
+    
+    [HttpDelete("{id:guid}")] 
+    public async Task<IActionResult> DeleteWindow(Guid id)
+    {
+        await _windowService.DeleteById(id);
+        return Ok();
     }
 }

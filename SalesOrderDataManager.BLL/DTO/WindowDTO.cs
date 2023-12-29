@@ -8,4 +8,5 @@ public class WindowDTO
     public int TotalSubElements { get; set; }
     public List<SubElementDTO>? SubElements { get; set; }
     public SalesOrderDTO? Order { get; set; }
+    public string? OrderId { get; set; }
 }

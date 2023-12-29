@@ -7,4 +7,6 @@ namespace SalesOrderDataManager.BLL.Interfaces;
 public interface IWindowService
 {
     Task<IReadOnlyList<WindowDTO>> GetAllByCondition(Expression<Func<Window, bool>> func);
+    Task DeleteById(Guid id);
+    Task<WindowDTO?> AddOrUpdate(WindowDTO window);
 }
