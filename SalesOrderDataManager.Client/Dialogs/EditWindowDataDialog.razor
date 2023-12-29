@@ -1,0 +1,43 @@
+﻿@using SalesOrderDataManager.BLL.DTO
+
+@if (Window is not null)
+{
+    <div class="dialog-background">
+        <div class="dialog">
+            <h3>Create Sales Order</h3>
+            <div>
+                <label>Name:</label>
+                <input @bind="Window.Name" type="text"/>
+            </div>
+            <div>
+                <label>Quantity of windows:</label>
+                <input @bind="Window.QuantityOfWindows" type="text"/>
+            </div>
+            <div>
+                <label>Total sub elements:</label>
+                <input @bind="Window.TotalSubElements" type="text"/>
+            </div>
+            <div>
+                <button @onclick="HandleSave">Save</button>
+                <button @onclick="HandleCancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public EventCallback<WindowDTO> SaveOrder { get; set; }
+    [Parameter] public EventCallback CloseDialog { get; set; }
+    [Parameter] public WindowDTO? Window { get; set; }
+
+    private void HandleSave()
+    {
+        SaveOrder.InvokeAsync(Window);
+    }
+
+    private void HandleCancel()
+    {
+        CloseDialog.InvokeAsync();
+    }
+
+}

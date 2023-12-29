@@ -1,9 +1,14 @@
 ﻿@page "/SalesOrder/{SalesOrderId}"
 @using SalesOrderDataManager.BLL.DTO
+@using SalesOrderDataManager.BLL.Extensions
+@using SalesOrderDataManager.Client.Dialogs
 @inject HttpClient Http
 @inject NavigationManager NavigationManager
+@inject IToastService ToastService
 
 <h3>Order information</h3>
+<button type="button" @onclick="ShowCreateWindowDialog" class="button-common button-create">Create New Window</button>
+
 @if (_orderDto is not null)
 {
     <div class="alert alert-light" role="alert">
@@ -48,12 +53,20 @@ else
                 <td>@window.TotalSubElements</td>
                 <td>
                     <button type="submit"
-                            @onclick="@(_ => ClickEditRecord(window))">
+                            @onclick="@(_ => ClickEditRecord(window))"
+                            class="button-common button-edit">
                         Edit
                     </button>
                     &nbsp;
                     <button type="submit"
-                            @onclick="@(_ => ClickDeleteButton(window))">
+                            @onclick="@(_ => ClickShowDetails(window))"
+                            class="button-common button-details">
+                        Details
+                    </button>
+                    &nbsp;
+                    <button type="submit"
+                            @onclick="@(_ => ClickDeleteButton(window))"
+                            class="button-common button-delete">
                         Delete
                     </button>
                 </td>
@@ -62,22 +75,91 @@ else
         </tbody>
     </table>
 }
+@if (_showEditWindowDialog)
+{
+    <EditWindowDataDialog
+        Window="@_currentWindowForEdit"
+        CloseDialog="@CloseCreateDialog" SaveOrder="@SaveNewWindow"/>
+}
+
 @code {
     [Parameter] public string? SalesOrderId { get; set; }
 
     private SalesOrderDTO? _orderDto;
     private List<WindowDTO>? _windowDtos;
+    private bool _showEditWindowDialog = false;
+    private WindowDTO? _currentWindowForEdit;
+
     protected override async Task OnParametersSetAsync()
     {
         _orderDto = await Http.GetFromJsonAsync<SalesOrderDTO>($"api/SalesOrder/{SalesOrderId}");
         _windowDtos = await Http.GetFromJsonAsync<List<WindowDTO>>($"api/SalesOrder/{SalesOrderId}/Window");
         await base.OnParametersSetAsync();
     }
+
     private async Task ClickDeleteButton(WindowDTO obj)
     {
+        var response = await Http.DeleteAsync($"api/SalesOrder/{SalesOrderId}/Window/{obj.Id}");
+        if (response.IsSuccessStatusCode)
+        {
+            _windowDtos?.Remove(obj);
+            StateHasChanged();
+        }
+        else
+        {
+            ToastService.ShowError("The order could not be deleted");
+        }
     }
 
-    private async Task ClickEditRecord(WindowDTO obj)
+    private Task ClickShowDetails(WindowDTO obj)
     {
+        NavigationManager.NavigateTo($"/SalesOrder/{SalesOrderId}/window/{obj.Id}", false);
+        return Task.CompletedTask;
     }
+
+    private async Task SaveNewWindow(WindowDTO newWindow)
+    {
+        if (_windowDtos is null) return;
+
+        newWindow.OrderId = SalesOrderId;
+        var response = await Http.PostAsJsonAsync($"api/SalesOrder/{SalesOrderId}/Window", newWindow);
+
+        if (response.IsSuccessStatusCode is false)
+        {
+            ToastService.ShowError("The order could not be saved");
+            return;
+        }
+
+        var addedWindow = await response.Content.ReadFromJsonAsync<WindowDTO>();
+        if (addedWindow is null) return;
+
+        int indexOfExisting = _windowDtos.FindIndex(a => a.Id == addedWindow.Id);
+        if (indexOfExisting != -1)
+        {
+            _windowDtos[indexOfExisting] = addedWindow;
+        }
+        else
+        {
+            _windowDtos?.Add(addedWindow);
+        }
+
+        StateHasChanged();
+        CloseCreateDialog();
+    }
+
+    private Task ClickEditRecord(WindowDTO window)
+    {
+        _currentWindowForEdit = window.Clone();
+        _showEditWindowDialog = true;
+        return Task.CompletedTask;
+    }
+
+    private void ShowCreateWindowDialog()
+    {
+        _currentWindowForEdit = new WindowDTO();
+        _showEditWindowDialog = true;
+    }
+
+    private void CloseCreateDialog() => _showEditWindowDialog = false;
+
 }
