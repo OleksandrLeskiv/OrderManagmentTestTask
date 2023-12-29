@@ -1,0 +1,45 @@
+﻿@using SalesOrderDataManager.BLL.DTO
+@if (SubElement is not null)
+{
+    <div class="dialog-background">
+        <div class="dialog">
+            <h3>@(SubElement.Id == null ? "Create" : "Edit") Sub Element</h3>
+            <div>
+                <label>Element:</label>
+                <input @bind="SubElement.Element" type="text"/>
+            </div>
+            <div>
+                <label>Type:</label>
+                <input @bind="SubElement.Type" type="text"/>
+            </div>
+            <div>
+                <label>Width:</label>
+                <input @bind="SubElement.Width" type="number"/>
+            </div>
+            <div>
+                <label>Height:</label>
+                <input @bind="SubElement.Height" type="number"/>
+            </div>
+            <div>
+                <button @onclick="HandleSave">Save</button>
+                <button @onclick="HandleCancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public EventCallback<SubElementDTO> SaveOrder { get; set; }
+    [Parameter] public EventCallback CloseDialog { get; set; }
+    [Parameter] public SubElementDTO? SubElement { get; set; }
+
+    private void HandleSave()
+    {
+        SaveOrder.InvokeAsync(SubElement);
+    }
+
+    private void HandleCancel()
+    {
+        CloseDialog.InvokeAsync();
+    }
+}
