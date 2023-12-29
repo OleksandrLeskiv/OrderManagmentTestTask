@@ -1,0 +1,171 @@
+﻿@page "/SalesOrder/{SalesOrderId}/window/{WindowId}"
+@using SalesOrderDataManager.BLL.DTO
+@using SalesOrderDataManager.BLL.Extensions
+@using SalesOrderDataManager.Client.Dialogs
+@inject HttpClient Http
+@inject IToastService ToastService
+
+<h3>Window details</h3>
+
+@if (_windowDto is not null)
+{
+    <div class="alert alert-light" role="alert">
+        <table>
+            <tr>
+                <td>Window name </td>
+                <td>:</td>
+                <td class="fw-bold">@_windowDto.Name</td>
+            </tr>
+            <tr>
+                <td>Quantity of windows </td>
+                <td>:</td>
+                <td class="fw-bold">@_windowDto.QuantityOfWindows</td>
+            </tr>
+            <tr>
+                <td>Total sub elements </td>
+                <td>:</td>
+                <td class="fw-bold">@_windowDto.TotalSubElements</td>
+            </tr>
+        </table>
+    </div>
+}
+
+@if (_subElementDtos is not null)
+{
+    <button type="button" @onclick="ShowCreateSubElementDialog" class="button-common button-create">Create New SubElement</button>
+}
+
+@if (_subElementDtos is null)
+{
+    <p>
+        <em>Loading...</em>
+    </p>
+}
+else if (_subElementDtos.Count == 0)
+{
+    <p>
+        <em>No sub elements available.</em>
+    </p>
+}
+else
+{
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Element</th>
+            <th>Type</th>
+            <th>Width</th>
+            <th>Height</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var subElement in _subElementDtos)
+        {
+            <tr>
+                <td>@subElement.Element</td>
+                <td>@subElement.Type</td>
+                <td>@subElement.Width</td>
+                <td>@subElement.Height</td>
+                <td>
+                    <button type="submit"
+                            @onclick="@(_ => ClickEditSubElement(subElement))"
+                            class="button-common button-edit">
+                        Edit
+                    </button>
+                    &nbsp;
+                    <button type="submit"
+                            @onclick="@(_ => ClickDeleteSubElement(subElement))"
+                            class="button-common button-delete">
+                        Delete
+                    </button>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+@if (_showEditSubElementDialog)
+{
+    <EditSubElementDialog
+        SubElement="@_currentSubElementForEdit"
+        CloseDialog="@CloseCreateDialog" SaveOrder="@SaveNewSubElement"/>
+}
+
+@code {
+    [Parameter] public string? SalesOrderId { get; set; }
+    [Parameter] public string? WindowId { get; set; }
+
+    private WindowDTO? _windowDto;
+    private List<SubElementDTO>? _subElementDtos;
+    private bool _showEditSubElementDialog = false;
+    private SubElementDTO? _currentSubElementForEdit;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _windowDto = await Http.GetFromJsonAsync<WindowDTO>($"api/SalesOrder/{SalesOrderId}/Window/{WindowId}");
+        _subElementDtos = await Http.GetFromJsonAsync<List<SubElementDTO>>($"api/SalesOrder/{SalesOrderId}/Window/{WindowId}/SubElement");
+        await base.OnInitializedAsync();
+    }
+
+    private void ShowCreateSubElementDialog()
+    {
+        _currentSubElementForEdit = new SubElementDTO();
+        _showEditSubElementDialog = true;
+    }
+
+    private Task ClickEditSubElement(SubElementDTO subElement)
+    {
+        _currentSubElementForEdit = subElement.Clone();
+        _showEditSubElementDialog = true;
+        return Task.CompletedTask;
+    }
+
+    private void CloseCreateDialog() => _showEditSubElementDialog = false;
+
+    private async Task ClickDeleteSubElement(SubElementDTO subElement)
+    {
+        var response = await Http.DeleteAsync($"api/SalesOrder/{SalesOrderId}/Window/{WindowId}/SubElement/{subElement.Id}");
+        if (response.IsSuccessStatusCode)
+        {
+            _subElementDtos?.Remove(subElement);
+            StateHasChanged();
+        }
+        else
+        {
+            ToastService.ShowError("The sub element could not be deleted");
+        }
+    }
+
+    private async Task SaveNewSubElement(SubElementDTO subElementDto)
+    {
+        if (_subElementDtos is null) return;
+
+        subElementDto.WindowId = WindowId;
+        var response = await Http.PostAsJsonAsync($"api/SalesOrder/{SalesOrderId}/Window/{WindowId}/SubElement", subElementDto);
+
+        if (response.IsSuccessStatusCode is false)
+        {
+            ToastService.ShowError("The order could not be saved");
+            return;
+        }
+
+        var addedSubElement = await response.Content.ReadFromJsonAsync<SubElementDTO>();
+        if (addedSubElement is null) return;
+
+        int indexOfExisting = _subElementDtos.FindIndex(a => a.Id == addedSubElement.Id);
+        if (indexOfExisting != -1)
+        {
+            _subElementDtos[indexOfExisting] = addedSubElement;
+        }
+        else
+        {
+            _subElementDtos?.Add(addedSubElement);
+        }
+
+        StateHasChanged();
+        CloseCreateDialog();
+    }
+
+}
