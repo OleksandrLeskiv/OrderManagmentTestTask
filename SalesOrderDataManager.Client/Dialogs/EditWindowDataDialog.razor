@@ -4,7 +4,7 @@
 {
     <div class="dialog-background">
         <div class="dialog">
-            <h3>Create Sales Order</h3>
+            <h3>@(Window.Id == null ? "Create" : "Edit") Window</h3>
             <div>
                 <label>Name:</label>
                 <input @bind="Window.Name" type="text"/>

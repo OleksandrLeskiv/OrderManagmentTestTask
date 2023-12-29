@@ -7,7 +7,6 @@
 @inject IToastService ToastService
 
 <h3>Order information</h3>
-<button type="button" @onclick="ShowCreateWindowDialog" class="button-common button-create">Create New Window</button>
 
 @if (_orderDto is not null)
 {
@@ -28,10 +27,22 @@
         </table>
     </div>
 }
+@if (_windowDtos is not null)
+{
+    <button type="button" @onclick="ShowCreateWindowDialog" class="button-common button-create">Create New Window</button>
+}
 
 @if (_windowDtos is null)
 {
-    <p> Loading...</p>
+    <p>
+        <em>Loading... </em>
+    </p>
+}
+else if (_windowDtos.Count == 0)
+{
+    <p>
+        <em>No windows available</em>
+    </p>
 }
 else
 {
